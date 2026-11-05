@@ -1,0 +1,32 @@
+---
+- name: Deploy SSH key and create ansible user
+  hosts: all
+  become: true
+  vars:
+    managed_user: ansible
+    # Вставь сюда содержимое ~/.ssh/id_ed25519.pub одной строкой
+    managed_user_public_key: "{{ lookup('file', '~/.ssh/id_ed25519.pub') }}"
+
+  tasks:
+    - name: Create managed user
+      ansible.builtin.user:
+        name: "{{ managed_user }}"
+        shell: /bin/bash
+        create_home: yes
+        state: present
+
+    - name: Add authorized key for ansible user
+      ansible.posix.authorized_key:
+        user: "{{ managed_user }}"
+        key: "{{ managed_user_public_key }}"
+        state: present
+        exclusive: false   # true — удалит все другие ключи (осторожно!)
+
+    - name: Allow sudo without password via sudoers.d
+      ansible.builtin.copy:
+        content: "{{ managed_user }} ALL=(ALL) NOPASSWD: ALL\n"
+        dest: "/etc/sudoers.d/{{ managed_user }}"
+        owner: root
+        group: root
+        mode: "0440"
+        validate: 'visudo -cf %s'

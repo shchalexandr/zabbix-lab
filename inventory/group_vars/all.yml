@@ -1,0 +1,15 @@
+# Версия Zabbix для установки (например, 7.0 LTS или 7.4 не LTS)
+#zabbix_agent_version: "7.4"
+#zabbix_version: "7.4" # не влияет на repo
+#zabbix_repo_version: "7.4" # явно указываем URL репозитория
+#zabbix_server_version: "7.4" # дополнительно, на случай, если роль сервера использует её
+# добавление двух последних  переменных должно решить проблему добавление репозитория 7.2, которого не существует
+
+# указываем явно URL репозитория
+#zabbix_repo_deb_url: "https://repo.zabbix.com/zabbix/7.4/debian"
+
+# Пароль для базы данных Zabbix (в реальном проекте используйте Ansible Vault)
+zabbix_db_password: "123Db"
+
+# IP-адрес Zabbix Server для агентов
+zabbix_server_ip: "10.10.10.3"

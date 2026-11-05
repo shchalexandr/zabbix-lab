@@ -1,0 +1,61 @@
+---
+- name: Deploy Zabbix Server on VM2
+  hosts: zabbix_server
+  become: true
+  vars:
+    zabbix_server_version: "7.4"
+    zabbix_repo_version: "7.4"
+    zabbix_web_version: "7.4"
+    # Настройки базы данных для роли
+    zabbix_server_dbname: zabbix
+    zabbix_server_dbuser: zabbix
+    zabbix_db_password: "123Db"
+    zabbix_server_dbhost: localhost
+    zabbix_server_version_check: false # использую debian 13, которого ещё нет в словаре проверки версий
+    zabbix_web_version_check: false
+    zabbix_php_version: "8.4"
+
+  pre_tasks:
+    - name: Ensure Apache-based Zabbix config is absent (conflicts with Nginx config)
+      ansible.builtin.apt:
+        name: zabbix-apache-conf
+        state: absent
+        purge: yes
+    - name: Ensure acl package is present (for become_user)
+      ansible.builtin.apt:
+        name: acl
+        state: present
+        update_cache: yes
+    - name: Ensure Nginx and Zabbix frontend packages are present
+      ansible.builtin.apt:
+        name:
+          - nginx
+          - zabbix-frontend-php
+          - zabbix-nginx-conf
+          - "php{{ zabbix_php_version }}-fpm"
+          - "php{{ zabbix_php_version }}-pgsql"
+        state: present
+        update_cache: yes
+    - name: Ensure PostgreSQL server is installed
+      ansible.builtin.apt:
+        name:
+        - postgresql
+        - postgresql-contrib
+        state: present
+    - name: Ensure PHP-FPM for Zabbix is installed
+      ansible.builtin.apt:
+        name: "php{{ zabbix_php_version }}-fpm"
+        state: present
+        update_cache: yes
+  roles:
+    - role: community.zabbix.zabbix_server
+      vars:
+        #zabbix_server_db_password: "{{ zabbix_db_password }}"
+        zabbix_server_manage_db: true
+        zabbix_server_dbpassword_hash_method: "scram-sha-256"
+        #zabbix_repo_version: 7.4
+        #zabbix_server_version: 7.4
+    - role: community.zabbix.zabbix_web
+      vars:
+        zabbix_web_http_server: nginx
+        zabbix_php_install: true
